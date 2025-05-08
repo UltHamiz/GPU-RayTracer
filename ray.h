@@ -3,6 +3,7 @@
 
 #include "vec3.h"
 
+// ray class with point3 and vec3 object ->  P(t) = A + t*b - > A point and b vector
 class ray {
     public:
 

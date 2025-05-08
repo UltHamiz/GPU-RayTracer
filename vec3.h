@@ -1,10 +1,10 @@
 #ifndef VEC3_H
 #define VEC3_H
 
-#include <cmath>
-#include <iostream>
+// #include <cmath>
+// #include <iostream>
 
-
+// basic vector class (also used for points and color)
 class vec3 {
     public:
         double e[3];
