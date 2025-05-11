@@ -21,12 +21,22 @@ class interval {
             return max - min;
         }
 
-        bool contains(double x) const {
+        bool contains(double x) const { // [min, max]
             return min <= x && x <= max;
         }
 
-        bool surrounds(double x) const {
+        bool surrounds(double x) const { // (min,max)
             return min < x && x < max;
+        }
+
+        double clamp(double x)  const { // makes sure returned value is in interval if x isn't
+            if (x < min) {
+                return min;
+            }
+            if (x > max) {
+                return max;
+            }
+            return x;
         }
 
         static const interval empty;
