@@ -2,6 +2,7 @@
 #define HITTABLE_H
 
 #include "ray.h" //can comment out
+#include "interval.h"
 
 class hit_record {
     public:
@@ -25,7 +26,7 @@ class hittable{
 
         // virtual makes it so derived class's implementation overrides; = 0 to say derived class requires and implementation
         // upper and lower bounds on t (when to count a hit)
-        virtual bool hit(const ray& r, double ray_tmin, double ray_tmax, hit_record& rec) const = 0;
+        virtual bool hit(const ray& r, interval ray_t, hit_record& rec) const = 0;
 };
 
 
