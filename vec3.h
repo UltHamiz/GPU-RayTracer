@@ -65,6 +65,18 @@ class vec3 {
         double length_squared() const {
             return (e[0]*e[0]) + (e[1]*e[1]) + (e[2]*e[2]); 
         }
+
+
+        // random vector generation (used for reflections of rays; diffused materials)
+
+        static vec3 random() {
+            return vec3(random_double(), random_double(), random_double());
+        }
+        
+        static vec3 random(double min, double max) {
+            return vec3(random_double(min, max), random_double(min,max), random_double(min,max));
+        }
+
 };
 
 // alias for vec3 class
@@ -118,5 +130,28 @@ inline vec3 unit_vector(const vec3& v){
 
 // think about differences between defining function in class (in the header), defining it outside class (same/separate file)
 // and defining it inline
+
+// implementation of rejection algorithm (for vector on the surface of a hemisphere)
+// this is slow; how would an analytical version of this perform?
+inline vec3 random_unit_vector() {
+    while(true) {
+        auto p = vec3::random();
+        auto lengthsquared = p.length_squared();
+        if (lengthsquared <= 1 && lengthsquared > 1e-160){ // lower bound to avoid underflow of zero for lensq operation
+            return p / sqrt(lengthsquared);
+        }
+    }
+}
+
+// generates a random unit vector; checks if that random unit vector's dot product with a surface normal is correct
+// i.e. that the generates vector is in the correct hemisphere/reflecting
+inline vec3 random_on_hemisphere(const vec3& normal) {
+    vec3 unit_vec_sphere = random_unit_vector();
+    if (dot(unit_vec_sphere, normal) > 0.0) { //in direction of norm/surface vector (what we want)
+        return unit_vec_sphere;
+    } else {
+        return -unit_vec_sphere;
+    }
+}
 
 #endif
