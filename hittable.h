@@ -4,12 +4,16 @@
 #include "ray.h" //can comment out
 #include "interval.h"
 
+class material; // tells compiler that the class will/is defined later on
+
+// basically class to store information related to ray hits
 class hit_record {
     public:
         point3 p;
         vec3 normal;
         double t;
         bool front_face; // true if ray is outside
+        shared_ptr<material> mat;
 
         void set_face_normal(const ray& r, const vec3& outward_normal){
             // sets the hit record normal vector

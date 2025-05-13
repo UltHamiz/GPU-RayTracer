@@ -66,6 +66,12 @@ class vec3 {
             return (e[0]*e[0]) + (e[1]*e[1]) + (e[2]*e[2]); 
         }
 
+        bool near_zero() const {
+            // vector near zero across x,y,z
+            auto lowerbound = 1e-8;
+            return (std::fabs(e[0]) < lowerbound) && (std::fabs(e[1]) < lowerbound) && (std::fabs(e[2]) < lowerbound); // bad bug before, paren()
+        }
+
 
         // random vector generation (used for reflections of rays; diffused materials)
 
@@ -135,7 +141,7 @@ inline vec3 unit_vector(const vec3& v){
 // this is slow; how would an analytical version of this perform?
 inline vec3 random_unit_vector() {
     while(true) {
-        auto p = vec3::random();
+        auto p = vec3::random(-1,1); // bug, was random(), generating vectors in particular direction ("up") -> "too smooth"
         auto lengthsquared = p.length_squared();
         if (lengthsquared <= 1 && lengthsquared > 1e-160){ // lower bound to avoid underflow of zero for lensq operation
             return p / sqrt(lengthsquared);
@@ -152,6 +158,11 @@ inline vec3 random_on_hemisphere(const vec3& normal) {
     } else {
         return -unit_vec_sphere;
     }
+}
+
+// "perfect reflection vector"
+inline vec3 reflect(const vec3& v, const vec3& n) {
+    return v - 2*dot(v,n)*n; // "b vector"
 }
 
 #endif

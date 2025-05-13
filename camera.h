@@ -5,6 +5,7 @@
 // Use the results of these rays to construct the rendered image.
 
 #include "hittable.h"
+#include "material.h"
 
 class camera {
     public:
@@ -118,9 +119,18 @@ class camera {
 
             if (world.hit(r, interval(0.001, infinity), rec)) { // min to prevent shadow acne -> collision due to slight off error (origin of bounced vector slight below surface -> double bounce)
                 // adding surface normal to random reflect vector to create lambertian reflection (more centered around surface normal)
-                vec3 direction = rec.normal +  random_unit_vector(); //random for diffused/rough material
-                return .5 * ray_color(ray(rec.p, direction), depth - 1,world); // ray reflects and check if that reflected ray hits something
-                // basically takes on % of reflected rays color -> recursive rn
+                // vec3 direction = rec.normal +  random_unit_vector(); //random for diffused/rough material
+                // return .5 * ray_color(ray(rec.p, direction), depth - 1,world); // ray reflects and check if that reflected ray hits something
+                // basically takes on % (attenuation) of reflected rays color -> recursive rn
+                
+                // different types of scattering and attenuation per material   
+                ray scattered;
+                color attenuation;
+                if (rec.mat->scatter(r, rec, attenuation, scattered)) {
+                    return attenuation * ray_color(scattered, depth -1, world); // depth!!!
+                }
+                return color(0,0,0); // should come here when fuzzyness of vector results in vector not in direction of normal
+
             }
 
             vec3 unit_direction = unit_vector(r.direction());

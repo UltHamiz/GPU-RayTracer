@@ -1,39 +1,9 @@
-// #include <iostream>
-// #include "color.h"
-// #include "vec3.h"
-// // look in stb_image.h for writing files in other file formats
-// o/w use/make an api
-// // probably use fstream for just straight up writting to a file
-
-// int main() {
-//     int image_width = 256;
-//     int image_height = 256;
-//     std::cout << "P3\n" << image_width << " " << image_height << "\n255\n";
-
-//     for(int i = 0 ; i < image_height; i++) {
-//         for(int j = 0; j < image_width; j++){
-//             double r = double(j) / (image_width - 1);
-//             double g = double(i) / (image_height - 1);
-//             double b = 0.0;
-
-//             // int ir = int(255.999 * r);
-//             // int ig = int(255.999 * g);
-//             // int ib = int(255.999 * b);
-//             // std::cout << ir << ' ' << ig << ' ' << ib << '\n';
-
-//             auto pixel_color = color(double(i)/(image_width-1), double(j)/(image_height-1), 0);
-//             write_color(std::cout, pixel_color);
-//         }
-//     }
-// }
-
-
-
 #include "rtweekend.h"
 #include "camera.h"
 #include "hittable.h"
 #include "hittable_list.h"
 #include "sphere.h"
+#include "material.h"
 
 // #include <iostream>
 
@@ -170,8 +140,24 @@ int main() {
 
     // world building
     hittable_list world;
-    world.add(make_shared<sphere>(point3(0,0,-1), 0.5));
-    world.add(make_shared<sphere>(point3(0,-100.5,-1), 100));
+
+    // define material types
+
+    auto material_ground = make_shared<lambertian>(color(0.8, 0.8, 0.0));
+    auto material_center = make_shared<lambertian>(color(0.1, 0.2, 0.5));
+    auto material_left = make_shared<metal>(color(0.8,0.8,0.8), 0.3);
+    auto material_right = make_shared<metal>(color(0.8, 0.6, 0.2), 1.0);
+    
+    world.add(make_shared<sphere>(point3(0.0, -100.5, -1.0), 100.0, material_ground));
+    world.add(make_shared<sphere>(point3(0.0, 0.0, -1.2), 0.5, material_center));
+    world.add(make_shared<sphere>(point3(-1.0, 0.0, -1.0), 0.5, material_right));
+    world.add(make_shared<sphere>(point3(1.0, 0.0, -1.0), 0.5, material_left));
+
+
+
+
+    // world.add(make_shared<sphere>(point3(0,0,-1), 0.5));
+    // world.add(make_shared<sphere>(point3(0,-100.5,-1), 100));
 
     camera cam;
 

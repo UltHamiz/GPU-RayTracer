@@ -1,0 +1,7 @@
+# untracked files
+*.ppm
+main.exe
+main.obj
+main.pbd
+.vscode
+*.pdb
