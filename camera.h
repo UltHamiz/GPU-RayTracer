@@ -20,6 +20,10 @@ class camera {
         point3 lookat = point3(0,0,-1); // point camera is looking at
         vec3 vup = vec3(0,1,0); // camera relative up direction
 
+        // camera features for defocus blur (lens disk)
+        double defocus_angle = 0; //cone angle
+        double focus_dist = 10; //distance from camera center to focus plan (also viewport plan)
+
         void render(const hittable& world) {
             initialize();
 
@@ -60,7 +64,11 @@ class camera {
         vec3 pixel_delta_v;
         double pixel_sample_scale; // color scale factor for sum of pixel samples (?)
 
-        vec3 u, v, w; // basis vectors for camera
+        vec3 u, v, w; // basis vectors for camera position
+
+        // horizontal and vertical radii for disk
+        vec3 defocus_disk_u;
+        vec3 defocus_disk_v;
 
 
         void initialize() {
@@ -78,10 +86,11 @@ class camera {
             // camera and viewport stuff
             // try this with a different viewport height, it shouldn't matter -> scales stuff out to same value
             // also fov stuff
-            auto focal_length = (lookfrom - lookat).length();
+
+            // auto focal_length = (lookfrom - lookat).length();
             auto theta = degree_to_radians(vfov);
             auto h = std::tan(theta/2);
-            auto viewport_height = 2.0 * h * focal_length;
+            auto viewport_height = 2.0 * h * focus_dist;
             auto viewport_width = viewport_height * (double(image_width)/image_height); //isnt this just the aspect ratio? -> ideal ratio not necessacrily exact
             // center = point3(0,0,0);
 
@@ -100,17 +109,23 @@ class camera {
             pixel_delta_v = viewport_v/image_height;
 
             // (offset) location of upper left pixel
-            auto viewport_upper_left = center - (focal_length * w) - viewport_u/2 - viewport_v/2;
+            auto viewport_upper_left = center - (focus_dist * w) - viewport_u/2 - viewport_v/2;
             pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v); 
+
+
+            // defocus blur disk vectors
+            auto defocus_radius = focus_dist * std::tan(degree_to_radians(defocus_angle / 2));
+            defocus_disk_u = u * defocus_radius;
+            defocus_disk_v = v * defocus_radius;
 
         }
 
         ray get_ray(int i, int j) const {
-            // gets a ray (from camera center) pointing to a random point around pixel i,j
+            // gets a ray (from rand point on disk lens plane) pointing to a random point around pixel i,j
             auto offset = sample_square();
             auto pixel_sample = pixel00_loc + ((i + offset.x()) * pixel_delta_u) + ((j + offset.y()) * pixel_delta_v);
 
-            auto ray_origin = center;
+            auto ray_origin = (defocus_angle <= 0 ) ? center : defocus_disk_sample();
             auto ray_direction = pixel_sample - ray_origin;
 
             return ray(ray_origin, ray_direction);
@@ -119,6 +134,12 @@ class camera {
         vec3 sample_square() const {
             // returns the vector to random point in [-.5,-.5]-[+.5,+.5] unit square -> pixel unit square
             return vec3(random_double() - 0.5, random_double() - 0.5, 0);
+        }
+
+        point3 defocus_disk_sample() const {
+            // returns a random point on the lens disk
+            auto p = random_in_unit_disk();
+            return center + (p[0] * defocus_disk_u) + (p[1] * defocus_disk_v);
         }
 
         color ray_color(const ray& r,int depth, const hittable& world) const {

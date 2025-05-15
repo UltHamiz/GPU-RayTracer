@@ -149,6 +149,18 @@ inline vec3 random_unit_vector() {
     }
 }
 
+
+// generate random point/vector on lens disk for defocus blur
+inline vec3 random_in_unit_disk() {
+    while (true) {
+        auto p = vec3(random_double(-1,1),random_double(-1,1), 0);
+        if (p.length_squared() < 1){
+            return p;
+        }
+    }
+}
+
+
 // generates a random unit vector; checks if that random unit vector's dot product with a surface normal is correct
 // i.e. that the generates vector is in the correct hemisphere/reflecting
 inline vec3 random_on_hemisphere(const vec3& normal) {
