@@ -6,6 +6,7 @@
 
 #include "hittable.h"
 #include "material.h"
+#include <fstream>
 
 class camera {
     public:
@@ -24,10 +25,12 @@ class camera {
         double defocus_angle = 0; //cone angle
         double focus_dist = 10; //distance from camera center to focus plan (also viewport plan)
 
-        void render(const hittable& world) {
+        void render(const hittable& world, std::string input) {
             initialize();
 
-            std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+            std::ofstream out(input);
+            // std::cout << "P3\n" << image_width << ' ' << image_height << "\n255\n";
+            out << "P3\n" << image_width << ' ' << image_height << "\n255\n";
             for(int i = 0; i < image_height; i++){
 
                 // progress indicator
@@ -49,11 +52,12 @@ class camera {
                         pixel_color += ray_color(r,max_depth, world);
 
                     }
-                    write_color(std::cout, pixel_sample_scale * pixel_color);
+                    write_color(out, pixel_sample_scale * pixel_color);
 
                 }
             }
             std::clog << "\rDone.             \n";
+            out.close();
         }
     
     private:

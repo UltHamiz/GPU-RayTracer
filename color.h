@@ -3,6 +3,7 @@
 
 #include "vec3.h"
 #include "interval.h"
+#include <fstream>
 // #include <iostream>
 
 using color = vec3;
