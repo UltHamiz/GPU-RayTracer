@@ -7,6 +7,8 @@
 #include <chrono>
 #include <thread>
 #include <string>
+#include <filesystem>
+#include <sstream>
 
 // int main() {
 
@@ -61,8 +63,12 @@
 // }
 
 
+// Usage : ./main.exe [num_threads] [output_location] [final_output]
+// Compile : cl /std:c++17 /O2 /GL /DNDEBUG /EHsc .\main.cpp /link /LTCG
 
 int main(int argc, char* argv[]) {
+
+    // environemnt setup
     hittable_list world;
 
     auto ground_material = make_shared<lambertian>(color(0.5, 0.5, 0.5));
@@ -107,9 +113,10 @@ int main(int argc, char* argv[]) {
 
     camera cam;
 
+    // camera settings
     cam.aspect_ratio      = 16.0 / 9.0;
-    cam.image_width       = 1200;
-    cam.samples_per_pixel = 50;
+    cam.image_width       = 800;
+    cam.samples_per_pixel = 400;
     cam.max_depth         = 50;
 
     cam.vfov     = 20;
@@ -124,10 +131,7 @@ int main(int argc, char* argv[]) {
 
     // cam.render(world, argv[2]);
 
-    // for (int i = 0; i < atoi(argv[1]); i++){
-    //     cam.render(world, argv[i + 2]);
-    // }
-
+    // multi-threading -> renders n different images of scene
     std::vector<std::thread> mythreads;
 
     for(int i = 0; i < atoi(argv[1]); i++) {
@@ -138,6 +142,103 @@ int main(int argc, char* argv[]) {
     for (auto& t : mythreads) {
         t.join();
     }
+
+
+    // average images
+    std::string path = argv[2];
+    std::vector<std::vector<int>> data;
+    std::string dimensions;
+    int file_no = 0;
+    // iterate every ppm file file location
+    for (const auto& e : std::filesystem::directory_iterator(path)) {
+        if (e.is_regular_file()) {
+            std::string file_p = e.path().filename().string();
+            if (file_p.substr(file_p.length() - 4) == ".ppm") { // file type check
+                std::cout << file_p << std::endl;
+                
+                // open ifstream
+                std::ifstream file(path + file_p);
+                // std::cout << path + file_p << std::endl;
+                
+                if (!file.is_open()) {
+                    std::cout << "file open error" << std::endl;
+                    return 1;
+                }
+                
+                // skip first 3 lines of ppm
+                std::string dummy;
+                for (int i = 0; i < 3 && std::getline(file, dummy); ++i) {
+                    if (i == 1) {
+                        // grab dimensions from image
+                        dimensions = dummy;
+                    }
+                }
+
+
+                std::string line;
+                int count = 0;
+                std::vector<std::vector<int>> values;
+                // read in all data from a file into 2d vector
+                while (std::getline(file, line)) {
+                    std::istringstream iss(line);
+                    int r, g, b;
+                    std::vector<int> val;
+                    if (iss >> r >> g >> b) {
+                        val.push_back(r);
+                        val.push_back(g);
+                        val.push_back(b);
+                    }
+                    values.push_back(val);
+                    // count += 1;
+                }
+
+                // enter values into main data vector
+                if (data.empty()) {
+                    data = values;
+                } else {
+                    for (size_t j = 0; j < data.size(); j++) {
+                        for (size_t k = 0; k < data[j].size(); k++){
+                            data[j][k] += values[j][k];
+                        }
+                    }
+                }
+
+                // print out values
+                // for(auto q: values) {
+                //     std::cout << q[0] << " " << q[1] << " " << q[2] << std::endl;
+                // }
+
+
+                file.close();
+                file_no += 1; 
+            }
+        }
+    }
+
+    // avg data values by num of files/renders
+    for(auto& q1: data) {
+        // std::cout << q[0] << " " << q[1] << " " << q[2] << std::endl;
+        for (auto& val : q1) {
+            val /= file_no;
+        }
+    }
+    // std::cout << data.size() << std::endl;
+
+
+    std::string output_file_path = argv[3];
+    std::ofstream final_out(output_file_path);
+    if (!final_out.is_open()) {
+        std::cout << "cant open" << std::endl;
+        return 1;
+    }
+    final_out << "P3\n" << dimensions << "\n255\n";
+
+    for(auto& q: data) {
+        final_out << q[0] << ' ' << q[1] << ' ' << q[2] << '\n';
+    }
+
+
+    final_out.close();
 
 
     auto end = std::chrono::high_resolution_clock::now();
